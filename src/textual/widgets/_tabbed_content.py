@@ -430,6 +430,12 @@ class TabbedContent(Widget):
         Note:
             Only one of `before` or `after` can be provided. If both are
             provided an exception is raised.
+
+            If the pane reuses the ID of a pane that was just removed with
+            [`clear_panes`][textual.widgets.TabbedContent.clear_panes] or
+            [`remove_pane`][textual.widgets.TabbedContent.remove_pane], await the
+            object returned by those methods first, otherwise a `DuplicateIds`
+            error may be raised.
         """
         if isinstance(before, TabPane):
             before = before.id
@@ -457,6 +463,11 @@ class TabbedContent(Widget):
         Returns:
             An optionally awaitable object that waits for the pane to be removed
                 and the Cleared message to be posted.
+
+        Note:
+            If you are about to add a pane that reuses the ID of the pane being
+            removed, await the returned object first, otherwise a `DuplicateIds`
+            error may be raised.
         """
         removal_awaitables: list[Awaitable] = [
             self.get_child_by_type(ContentTabs).remove_tab(
@@ -482,6 +493,18 @@ class TabbedContent(Widget):
         Returns:
             An optionally awaitable object which waits for all panes to be removed
                 and the Cleared message to be posted.
+
+        Note:
+            The panes are removed asynchronously, so ignoring the returned object is
+            only safe if you are not about to add panes that reuse the IDs of the
+            panes being removed. If you add a pane with an ID that is still being
+            removed, a `DuplicateIds` error will be raised. Await the returned
+            object before re-adding panes with the same IDs:
+
+            ```python
+            await tabbed_content.clear_panes()
+            tabbed_content.add_pane(TabPane("New content", id="pane-0"))
+            ```
         """
         await_clear = gather(
             self.get_child_by_type(ContentTabs).clear(),

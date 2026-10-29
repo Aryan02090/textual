@@ -466,6 +466,41 @@ async def test_tabbed_content_clear():
         assert pilot.app.cleared == 1
 
 
+async def test_clear_panes_then_readd_same_ids():
+    """Refreshing the panes with the same IDs after awaiting clear_panes().
+
+    Regression test for https://github.com/Textualize/textual/issues/6715.
+
+    The removal of the panes is asynchronous, so the result of clear_panes()
+    must be awaited before adding panes that reuse the IDs of the cleared
+    panes. Otherwise the new pane races the removal of the old one and a
+    DuplicateIds error is raised.
+    """
+
+    class TabbedApp(App[None]):
+        def compose(self) -> ComposeResult:
+            with TabbedContent():
+                yield TabPane("Test 1", id="pane-0")
+                yield TabPane("Test 2", id="pane-1")
+
+    async with TabbedApp().run_test() as pilot:
+        tabbed_content = pilot.app.query_one(TabbedContent)
+
+        for refresh in range(5):
+            await tabbed_content.clear_panes()
+            for index in range(2):
+                tabbed_content.add_pane(
+                    TabPane(f"Refresh {refresh} pane {index}", id=f"pane-{index}")
+                )
+
+        await pilot.pause()
+        assert tabbed_content.tab_count == 2
+        assert [pane.id for pane in tabbed_content.query(TabPane)] == [
+            "pane-0",
+            "pane-1",
+        ]
+
+
 async def test_disabling_does_not_deactivate_tab():
     class TabbedApp(App[None]):
         def compose(self) -> ComposeResult:

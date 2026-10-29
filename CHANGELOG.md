@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Clarified that the object returned by `TabbedContent.clear_panes()` and `TabbedContent.remove_pane()` must be awaited before adding panes that reuse the IDs of the removed panes https://github.com/Textualize/textual/issues/6715
+
 ## [8.2.8] - 2026-06-30
 
 ### Fixed
